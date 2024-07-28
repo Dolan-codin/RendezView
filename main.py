@@ -1,39 +1,76 @@
 from datetime import date, timedelta
-from dash import Dash, dcc, html, Input, Output, callback
+from dash import dash, dcc, html, Input, Output, callback
+import dash_bootstrap_components as dbc
+from pages.home import return_home_page
+from pages.organiser import return_organiser_page
+from pages.attendee import return_attendee_page
 
-app = Dash(__name__)
-app.layout = html.Div([
-    dcc.DatePickerRange(
-        id='my-date-picker-range',
-        min_date_allowed=date.today(),
-        max_date_allowed=date.today() + timedelta(days=365),
-        initial_visible_month=date.today(),
-        start_date=date.today(),
-        end_date=date.today() + timedelta(days=1)
-    ),
-    html.Div(id='output-container-date-picker-range')
-])
+app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 
+# the style arguments for the sidebar. We use position:fixed and a fixed width
+SIDEBAR_STYLE = {
+    "position": "fixed",
+    "top": 0,
+    "left": 0,
+    "bottom": 0,
+    "width": "w-50",
+    "padding": "2rem 1rem",
+    "background-color": "#f8f9fa",
+}
 
-@callback(
-    Output('output-container-date-picker-range', 'children'),
-    Input('my-date-picker-range', 'start_date'),
-    Input('my-date-picker-range', 'end_date'))
-def update_output(start_date, end_date):
-    string_prefix = 'You have selected: '
-    if start_date is not None:
-        start_date_object = date.fromisoformat(start_date)
-        start_date_string = start_date_object.strftime('%B %d, %Y')
-        string_prefix = string_prefix + 'Start Date: ' + start_date_string + ' | '
-    if end_date is not None:
-        end_date_object = date.fromisoformat(end_date)
-        end_date_string = end_date_object.strftime('%B %d, %Y')
-        string_prefix = string_prefix + 'End Date: ' + end_date_string
-    if len(string_prefix) == len('You have selected: '):
-        return 'Select a date to see it displayed here'
-    else:
-        return string_prefix
+# the styles for the main content position it to the right of the sidebar and
+# add some padding.
+CONTENT_STYLE = {
+    "margin-left": "25rem",
+    "margin-right": "2rem",
+    "padding": "2rem 1rem",
+}
 
+app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 
-if __name__ == '__main__':
-    app.run(debug=True)
+# Keep your SIDEBAR_STYLE and CONTENT_STYLE definitions here
+
+sidebar = html.Div(
+    [
+        html.H2("RendezView", className="display-4"),
+        html.Hr(),
+        html.P(
+            "Synchronize schedules, maximize moments", className="lead"
+        ),
+        dbc.Nav(
+            [
+                dbc.NavLink("Home", href="/", active="exact"),
+                dbc.NavLink("Organiser", href="/organiser", active="exact"),
+                dbc.NavLink("Attendee", href="/attendee", active="exact"),
+            ],
+            vertical=True,
+            pills=True,
+        ),
+    ],
+    style=SIDEBAR_STYLE,
+)
+
+content = html.Div(id="page-content", style=CONTENT_STYLE)
+
+app.layout = html.Div([dcc.Location(id="url"), sidebar, content])
+
+@app.callback(Output("page-content", "children"), [Input("url", "pathname")])
+def render_page_content(pathname):
+    if pathname == "/":
+        return return_home_page()
+    elif pathname == "/organiser":
+        return return_organiser_page(app)
+    elif pathname == "/attendee":
+        return return_attendee_page()
+    # If the user tries to reach a different page, return a 404 message
+    return html.Div(
+        [
+            html.H1("404: Not found", className="text-danger"),
+            html.Hr(),
+            html.P(f"The pathname {pathname} was not recognised..."),
+        ],
+        className="p-3 bg-light rounded-3",
+    )
+
+if __name__ == "__main__":
+    app.run(port=8888, debug=True)
