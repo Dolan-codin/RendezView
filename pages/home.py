@@ -1,4 +1,9 @@
+import dash
 from dash import html
 
-def return_home_page():
-    return html.P("This is the content of the home page!")
+dash.register_page(__name__, path='/')
+
+layout = html.Div([
+    html.H1('This is our Home page'),
+    html.Div('This is our Home page content.'),
+])

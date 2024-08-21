@@ -1,4 +1,9 @@
+import dash
 from dash import html
 
-def return_attendee_page():
-    return html.P("This is the content of the attendee page!")
+dash.register_page(__name__)
+
+layout = html.Div([
+    html.H1('This is our Attendee page'),
+    html.Div('This is our Attendee page content.'),
+])
